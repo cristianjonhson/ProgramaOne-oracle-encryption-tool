@@ -1,18 +1,16 @@
-/** Elementos en el DOM que se ocupan globalmente. **/
-const btnCrear = document.querySelector("#btnCrear"); 
-const inputValue = document.querySelector("#textbox"); 
+/**  elementos en el DOM que se ocupan globalmente. **/
+const btnCrear = document.querySelector("#btnCrear");
+const inputValue = document.querySelector("#textbox");
 const finalMessage = document.querySelector("#message");
 const buttonEncrypt = document.querySelector("#buttonEncrypt");
 const buttonDisableEncrypt = document.querySelector("#buttonDisabled");
 const copyButton = document.querySelector("#copyButton");
 const copyButtonKey = document.querySelector("#copyKey");
 const wrapperForm = document.querySelector("#wrapperSecret");
-const form = document.querySelector("#form");
-const titleCard = document.querySelector("#titleCard");
-const imgCard = document.querySelector("#imgCard");
-let ownSecretKey = undefined; // Variable para almacenar la llave secreta creada por el usuario
+let ownSecretKey = undefined;
+// Fin de los elementos globales
 
-/** Mapa para encriptar y desencriptar **/
+/**Secret key object */
 const password = {
   a: "ai",
   e: "enter",
@@ -25,66 +23,17 @@ const password = {
   vowelO: "ober",
   vowelU: "ufat",
 };
+/**Inicio de las diferentes funciones para ejecutar segun la situacion */
 
-// Mensajes de error predefinidos
-const ERROR_EMPTY_FIELD = "No puedes encriptar un campo vacío.";
-const ERROR_INVALID_TEXT = "Valida tu texto sin mayúsculas o acentos.";
-
-/** Validaciones **/
-
-/**
- * Verifica si el texto contiene solo letras minúsculas, espacios y caracteres permitidos.
- * @param {string} text - El texto a validar.
- * @returns {boolean} - Retorna true si el texto es válido, false en caso contrario.
- */
-const validateText = (text) => {
-  const regex = /^[a-z\s!?.,\u00f1]*$/; // Solo letras minúsculas, espacios, y caracteres permitidos
-  return regex.test(text);
-};
-
-/**
- * Muestra un mensaje de error en la interfaz de usuario.
- * @param {string} message - El mensaje de error a mostrar.
- */
-const handleError = (message) => {
-  handleActivateAlert(message, true);
-};
-
-/** Funciones de encriptado y desencriptado **/
-
-/**
- * Encripta un carácter según el mapa de encriptación definido.
- * @param {string} char - El carácter a encriptar.
- * @returns {string} - El carácter encriptado.
- */
-const encryptCharacter = (char) => password[char] || char;
-
-/**
- * Desencripta el texto encriptado según el mapa de encriptación definido.
- * @param {string} text - El texto a desencriptar.
- * @returns {string} - El texto desencriptado.
- */
-const decryptText = (text) => {
-  return text.replaceAll(password.vowelA, "a")
-             .replaceAll(password.vowelE, "e")
-             .replaceAll(password.vowelI, "i")
-             .replaceAll(password.vowelO, "o")
-             .replaceAll(password.vowelU, "u");
-};
-
-/** Funciones de manejo de UI **/
-
-/**
- * Envía y guarda la llave secreta personalizada creada por el usuario.
- */
+// función que asigna nuevos valores por referencia al objeto password.
 const handleSendSecretKey = () => {
-  const inputVowels = document.querySelectorAll("input"); // Captura todos los inputs de la llave secreta
+  const inputVowels = document.querySelectorAll("input");
   if (validateInputs(inputVowels)) {
     inputVowels.forEach((input) => {
-      const id = input.name.substring(5).toLocaleLowerCase(); // Obtiene la vocal del nombre del input
-      password[id] = input.value.trim().toLocaleLowerCase();  // Asigna el valor del input al mapa de encriptación
-      password[input.name] = input.value.trim().toLocaleLowerCase(); // Actualiza también las claves internas del objeto
-      handleCleaneInputs(input); // Limpia los inputs después de asignar los valores
+      const id = input.name.substring(5).toLocaleLowerCase();
+      password[id] = input.value.trim().toLocaleLowerCase();
+      password[input.name] = input.value.trim().toLocaleLowerCase();
+      handleCleaneInputs(input);
     });
     wrapperForm.classList.remove("visible");
     inputValue.classList.remove("hidden");
@@ -96,45 +45,39 @@ const handleSendSecretKey = () => {
       u: password["u"],
     });
   } else {
-    handleError(ERROR_INVALID_TEXT);
+    handleActivateAlert("Valida tus llaves, No mayúsculas y acentos", true);
   }
 };
-
-/**
- * Muestra u oculta el formulario para crear una llave secreta personalizada.
- */
+// Función que oculta y muestra el formulario, input del formulario.
 const handleCreateOwnKey = () => {
-  wrapperForm.classList.toggle("visible"); // Alterna la visibilidad del formulario
-  inputValue.classList.toggle("hidden"); // Oculta o muestra el campo de texto principal
-  initializeFormEvents(); // Inicializa los eventos del formulario
+  wrapperForm.classList.toggle("visible");
+  inputValue.classList.toggle("hidden");
+  const form = document.querySelector("#form");
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    handleSendSecretKey();
+  });
 };
-
-/**
- * Muestra el mensaje encriptado o desencriptado en la interfaz de usuario.
- * @param {string} text - El texto a mostrar.
- * @param {boolean} isEncripted - Indica si el texto es encriptado o desencriptado.
- */
+//Función que maneja el texto y el estado de la tarjeta de ecriptación.
 const handleStatusMessage = (text = "", isEncripted = false) => {
+  const titleCard = document.querySelector("#titleCard");
+  const imgCard = document.querySelector("#imgCard");
   if (text.trim() === "") {
     imgCard.classList.remove("hidden");
     titleCard.innerText = "Ningún mensaje fue encontrado";
-    finalMessage.innerText = "Ingrese un texto que desees encriptar o desencriptar.";
+    finalMessage.innerText =
+      "Ingrese un texto que desees encriptar o desencriptar.";
   } else if (text.trim() !== "" && !isEncripted) {
     imgCard.classList.add("hidden");
     titleCard.innerText = "El mensaje secreto es:";
     finalMessage.innerText = text;
   } else {
     imgCard.classList.add("hidden");
-    titleCard.innerText = "Mensaje encriptado:";
+    titleCard.innerText = "mensaje encriptado:";
     finalMessage.innerText = text;
   }
 };
-
-/**
- * Habilita o deshabilita el botón de copia según el tipo de texto (mensaje o llave).
- * @param {string} type - Tipo de texto ("message" o "key").
- * @param {boolean} status - Estado del botón (true para deshabilitar, false para habilitar).
- */
+// Función encargada de habilitar y deshabilitar el botón de copiar texto.
 const handleStatusCopyButton = (type = "message", status = true) => {
   if (type !== "message" && ownSecretKey !== undefined) {
     copyButtonKey.disabled = status;
@@ -142,106 +85,64 @@ const handleStatusCopyButton = (type = "message", status = true) => {
     copyButton.disabled = status;
   }
 };
-
-/**
- * Encripta el texto ingresado por el usuario.
- */
+// Función encargada de encryptar texto del textArea, además de validaciones del text (vacio, y sin mayusculas o acentos)
 const handleEncryptText = () => {
-  const textValue = inputValue.value.trim();
-  if (!validateText(textValue)) {
-    return handleError(ERROR_INVALID_TEXT);
+  if (inputValue.value === "") {
+    handleActivateAlert("No puedes encriptar un campo vacio.", true);
+  } else if (inputValue.value.search(/[^a-z \u00f1 \s !?,.]/) !== -1) {
+    handleActivateAlert("Valida tu texto sin mayusculas o acentos.", true);
+  } else {
+    let encryptText = "";
+    const textValue = inputValue.value;
+    let arrayText = [...textValue];
+    arrayText = arrayText.map((letter) => {
+      return password[letter] || letter;
+    });
+    arrayText.forEach((element) => {
+      encryptText = encryptText + element;
+    });
+    handleActivateAlert();
+    handleStatusMessage(encryptText, true);
+    handleCleaneInputs(inputValue);
+    handleStatusCopyButton("message", false);
+    handleStatusCopyButton("key", false);
   }
-  if (textValue === "") {
-    return handleError(ERROR_EMPTY_FIELD);
-  }
-
-  const encryptText = [...textValue].map(encryptCharacter).join("");
-  handleActivateAlert();
-  handleStatusMessage(encryptText, true);
-  handleCleaneInputs(inputValue);
-  handleStatusCopyButton("message", false);
-  handleStatusCopyButton("key", false);
 };
-
-/**
- * Desencripta el texto ingresado por el usuario.
- */
+// Función encargada de descriptar textos además de validación de texto vacio.
 const handleDesencryptText = () => {
-  const textValue = inputValue.value.trim();
-  if (textValue === "") {
-    return handleError(ERROR_EMPTY_FIELD);
+  if (inputValue.value === "") {
+    handleActivateAlert("No puedes desencriptar un campo vacio.", true);
+  } else {
+    let message = inputValue.value;
+    message = message.replaceAll(password.vowelA, "a");
+    message = message.replaceAll(password.vowelE, "e");
+    message = message.replaceAll(password.vowelI, "i");
+    message = message.replaceAll(password.vowelO, "o");
+    message = message.replaceAll(password.vowelU, "u");
+    handleStatusMessage(message, false);
+    handleCleaneInputs(inputValue);
+    handleStatusCopyButton("message", false);
+    handleStatusCopyButton("key", false);
   }
-
-  const message = decryptText(textValue);
-  handleStatusMessage(message, false);
-  handleCleaneInputs(inputValue);
-  handleStatusCopyButton("message", false);
-  handleStatusCopyButton("key", false);
 };
-
-/**
- * Copia el texto (mensaje o llave secreta) al portapapeles.
- * @param {string} type - Tipo de texto ("message" o "key") a copiar.
- */
+// fuction
+// Función encargada de copiar texto al clipboard del navegador.
 const handleCopyText = (type = "message") => {
-  const cb = navigator.clipboard;
   if (type === "message") {
-    const paragraph = finalMessage.textContent;
-    cb.writeText(paragraph).then(() =>
-      handleActivateAlert("Copiado al portapapeles")
-    );
+    const copiedText = finalMessage.innerText;
+    navigator.clipboard.writeText(copiedText);
+    handleStatusMessage();
+    handleStatusCopyButton(type, true);
   } else {
-    cb.writeText(ownSecretKey).then(() =>
-      handleActivateAlert("Llave secreta copiada")
-    );
+    navigator.clipboard.writeText(ownSecretKey);
+    handleStatusMessage();
+    handleStatusCopyButton("key", true);
   }
 };
 
-/**
- * Muestra una alerta en la interfaz de usuario.
- * @param {string} message - El mensaje de alerta a mostrar.
- * @param {boolean} error - Indica si la alerta es un error (true) o un éxito (false).
- */
-const handleActivateAlert = (
-  message = "Texto encriptado con éxito!",
-  error = false
-) => {
-  const alerta = document.querySelector("#alerta");
-  if (error) {
-    alerta.classList.remove("success");
-    alerta.classList.add("danger");
-  } else {
-    alerta.classList.remove("danger");
-    alerta.classList.add("success");
-  }
-  alerta.innerText = message;
-  alerta.classList.add("visible");
-  setTimeout(() => {
-    alerta.classList.remove("visible");
-  }, 5000);
-};
-
-/**
- * Limpia el valor de un input.
- * @param {HTMLInputElement} input - El input a limpiar.
- */
-const handleCleaneInputs = (input) => {
-  input.value = "";
-};
-
-/**
- * Inicializa los eventos del formulario para capturar la llave secreta personalizada.
- */
-const initializeFormEvents = () => {
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    handleSendSecretKey();
-  });
-};
-
-/** Eventos principales de la aplicación **/
-btnCrear.addEventListener("click", handleCreateOwnKey);
-buttonEncrypt.addEventListener("click", handleEncryptText);
-buttonDisableEncrypt.addEventListener("click", handleDesencryptText);
-copyButton.addEventListener("click", () => handleCopyText("message"));
+// Eventos que ocurren y las funciones que se ejecutan
+btnCrear.addEventListener("click", () => handleCreateOwnKey());
+buttonEncrypt.addEventListener("click", () => handleEncryptText());
+buttonDisableEncrypt.addEventListener("click", () => handleDesencryptText());
+copyButton.addEventListener("click", () => handleCopyText());
 copyButtonKey.addEventListener("click", () => handleCopyText("key"));
